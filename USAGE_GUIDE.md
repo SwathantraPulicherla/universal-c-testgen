@@ -125,7 +125,7 @@ gcc -I/path/to/unity/include tests/generated/test_*.c source_files.c -o test_run
 
 ## Demo Preparation
 
-### For Manager Presentation
+### For Presentation
 
 #### 1. Repository Showcase
 - Show the tool's GitHub repository
