@@ -541,6 +541,47 @@ class TestValidator:
             print("FIX: []")
             print("REMOVE: []")
 
+    def save_validation_report(self, validation_result: Dict, report_dir: str):
+        """Save validation report to file"""
+        import os
+        os.makedirs(report_dir, exist_ok=True)
+
+        # Create filename based on compilation status
+        base_name = os.path.splitext(os.path.basename(validation_result['file']))[0]
+        compiles_status = "compiles_yes" if validation_result['compiles'] else "compiles_no"
+        filename = f"{base_name}_{compiles_status}.txt"
+        filepath = os.path.join(report_dir, filename)
+
+        with open(filepath, 'w') as f:
+            f.write(f"VALIDATION REPORT\n")
+            f.write(f"================\n\n")
+            f.write(f"FILE: {validation_result['file']}\n")
+            f.write(f"COMPILES: {'Yes' if validation_result['compiles'] else 'No'}\n")
+            f.write(f"REALISTIC: {'Yes' if validation_result['realistic'] else 'No'}\n")
+            f.write(f"QUALITY: {validation_result['quality']}\n\n")
+
+            if validation_result['issues']:
+                f.write("ISSUES:\n")
+                for issue in validation_result['issues']:
+                    f.write(f"- {issue}\n")
+                f.write("\n")
+
+            # Categorize tests
+            if validation_result['issues']:
+                f.write("KEEP: [All tests - review issues manually]\n")
+                f.write("FIX: [Tests with compilation issues]\n")
+                f.write("REMOVE: [Tests with impossible scenarios]\n")
+            else:
+                f.write("KEEP: [All tests]\n")
+                f.write("FIX: []\n")
+                f.write("REMOVE: []\n")
+
+            # Add timestamp and generation details
+            from datetime import datetime
+            f.write(f"\nGenerated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+
+        print(f"💾 Report saved: {filepath}")
+
 
 def main():
     parser = argparse.ArgumentParser(description='Smart AI-powered C unit test generator')
@@ -619,11 +660,16 @@ def main():
         print("VALIDATION REPORTS")
         print(f"{'='*60}")
 
+        # Create verification report directory
+        report_dir = os.path.join(args.repo_path, "tests", "verification_report")
+
         for report in validation_reports:
             validator.print_validation_report(report)
+            validator.save_validation_report(report, report_dir)
 
     print(f"\n🎉 COMPLETED: {successful_generations}/{len(c_files)} files successfully generated")
     print(f"� Test files saved to: {args.output}")
+    print(f"� Verification reports saved to: {os.path.join(args.repo_path, 'tests', 'verification_report')}")
 
 
 if __name__ == '__main__':
