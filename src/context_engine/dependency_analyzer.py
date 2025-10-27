@@ -103,15 +103,29 @@ class DependencyAnalyzer:
         return list(dependencies)
 
     def find_all_c_files(self) -> List[str]:
-        """Find all C files in the repository"""
+        """Find all C files in the repository, ONLY processing files under src/ directory"""
         c_files = []
         for root, dirs, files in os.walk(self.repo_path):
+            # Only process files in the src directory
+            if 'src' not in root.replace('\\', '/').split('/'):
+                continue
+
             # Skip common build and hidden directories
-            dirs[:] = [d for d in dirs if not d.startswith('.') and d not in ['build', 'cmake-build', 'node_modules']]
+            dirs[:] = [d for d in dirs if not d.startswith('.') and
+                      d not in ['build', 'cmake-build', 'node_modules']]
 
             for file in files:
                 if file.endswith('.c'):
-                    c_files.append(os.path.join(root, file))
+                    file_path = os.path.join(root, file)
+
+                    # Additional safety checks - skip any remaining test or unity files
+                    file_lower = file.lower()
+                    if (file_lower.startswith('test_') or
+                        'unity' in file_lower or
+                        'test' in file_lower):
+                        continue
+
+                    c_files.append(file_path)
         return c_files
 
     def find_function_implementations(self, function_names: List[str]) -> Dict[str, str]:
